@@ -6,6 +6,7 @@ To what extent do psilocybin mushrooms and vodka affect a person’s ability to 
 
 ### Participation Criteria
 ![image](https://user-images.githubusercontent.com/97693483/179897857-78cf862f-8b0f-4244-bc64-84b8749a27de.png)
+
 We picked subjects from four villages that were all on the same island of Providence and were all coastal regions, to minimize diversity in the data that could be due to location. We also picked subjects that were 21 to 65 years old, because we took into account the legal age for drinking and the upper limit with which experimenters tend to pick subjects. We also could not consider subjects who were ill, pregnant or had an attention disorder. We took account of the subject’s gender and drinking habits; these were not factors for exclusion.
 We had sixty subjects in total, twenty in each of three treatment groups.
 
