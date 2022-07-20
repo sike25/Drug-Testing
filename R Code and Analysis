@@ -1,0 +1,202 @@
+---
+title: "Island Clinical Trial of usage of Drugs vs Focus"
+subtitle: "TEAM NAME"
+authors: "Ahanu Youngblood, Sike Ogieva, Tyler Fields, Corri Hickson"
+date: "7/13/2022"
+# DO NOT CHANGE YAML BELOW THIS LINE        
+output: 
+  pdf_document:
+  highlight: kate
+number_sections: true
+classoption: fleqn
+geometry: margin=0.75in
+linestretch: 1.25
+fontfamily: cmbright
+colorlinks: true
+citecolor: blue
+urlcolor: blue
+linkcolor: blue
+header-includes: 
+  # header/footer formats
+  - \usepackage{fancyhdr}\pagestyle{fancy}\fancyhf{}\cfoot{\thepage}
+  - \lhead{\footnotesize Incubator \copyright Brittney E. Bailey}
+  # formats for headings
+  - \usepackage[compact]{titlesec}
+  - \titleformat{\section}[hang]{\setstretch{1}\ifnum\value{section}>0 \newpage \fi \Large}{\bfseries Part \thesection}{5mm}{}[]
+  - \titleformat{\subsection}[hang]{\vspace{11pt}\setstretch{1}\large}{\large\bfseries\thesubsection}{5mm}{}[]
+  - \titleformat{\subsubsection}[hang]{\bfseries}{}{0mm}{}[]
+  # additional text formatting
+  - \AtBeginDocument{\raggedright}
+  - \AtBeginEnvironment{quote}{\large\setstretch{1}}
+  - \AtBeginEnvironment{Shaded}{\setstretch{1}}
+  - \definecolor{shadecolor}{RGB}{248,248,255}
+---
+  
+```{r setup, include=FALSE}
+# load packages
+library(tidyverse)
+library(mosaic)
+library(kableExtra)
+library(viridis)
+library(RColorBrewer)
+
+# set some code chunk defaults
+knitr::opts_chunk$set(
+  # code and plain R output display
+  size = "small", tidy = FALSE, comment = "\t",
+  # figure defaults
+  fig.align = "center", fig.width = 3.6, fig.height = 2.4,
+  # suppress warnings and messages
+  warning = FALSE, message = FALSE) 
+
+# default to black & white plot theme
+theme_set(theme_classic()) 
+
+# slower to display scientific notation; "NA"s knit as blank spaces
+options(scipen = 1, knitr.kable.NA = '')
+```
+
+# Data dictionary:
+* `Drug_type`: assigned drug group (Mushroom, alcohol, control)
+* `Before`: focus at baseline
+* `Thirty_minutes`: focus score 30 minutes after administration of drug
+* `An_Hour`: Focus score 1 hour after administration of drug
+* `Age`: Age of individual
+* `Gender`: Gender of individual
+* `Name`: name of individual
+* `Village`: Village in which the individual is from
+* `S_No`: Subject number for data tracking
+
+
+## Read in the data
+<!--
+Data read into variable drug_test.
+Elements (Before, Thirty_Minutes, An_Hour) combined into "Time".
+Refactored time from categorical to numeric data
+-->
+```{r read-data}
+  drug_test <- read_csv("The Islands Clinical Trial Data.csv") %>% 
+  pivot_longer(cols = c(Before, Thirty_Minutes, An_Hour),
+               names_to = "Time_fac",
+               values_to = "Missed_questions") %>% 
+  mutate(Time = case_when(Time_fac == "Before" ~ 0,
+                          Time_fac == "Thirty_Minutes" ~ 30,
+                          Time_fac == "An_Hour" ~ 60), 
+         Gender = fct_recode(Gender, 
+                             "Male" = "male",
+                             "Female" = "female"),
+         Drug_Type = fct_relevel(Drug_Type,
+                                 "alcohol", "mushroom", "control"))
+
+```
+
+
+# Data analysis
+```{r summary-statistics}
+# summary statistics for continuous variables
+  mean_data <- drug_test %>% 
+  group_by(Drug_Type, Time) %>% 
+  summarize(mean_missed = mean(Missed_questions), 
+            sd_missed = sd(Missed_questions)) %>% 
+  ungroup()
+
+```
+```{r, fig.width=5, fig.height= 3}
+  #Line Graph of Mean Missed Questions over Time. Primary Graph.
+  ggplot(mean_data, aes(x = Time,
+                      y = mean_missed,
+                      color = Drug_Type)) +
+  geom_point()+
+  geom_line(size = 1.5)+
+  scale_x_continuous(breaks = c(0, 30, 60))+
+  labs(x = "Time (Minutes)",
+       y = "Count of Missed Letters",
+       color = "Treatment",
+       title = "Focus vs Substance Consumption ")+
+   theme(axis.text.x=element_text(angle=45, hjust = 1),
+       axis.text=element_text(size = 8),
+       legend.text=element_text(size = 11))
+       #axis.ticks = element_line(size = 18))
+  ggsave("Mean Missed Questions over Time.png", width = 20 , height = 12, unit = "cm")
+```
+```{r, fig.width=5, fig.height= 3}
+ #Line Graph of Missed Questions over Age of Subjects
+ ggplot(drug_test, aes(x = Age,
+                      y = Missed_questions,
+                      color = Drug_Type))+
+  geom_line(aes(group = Drug_Type)) +
+  labs(x = "Age (in years)", 
+       y = "Count of Missed Letters",
+       color = "Drug Type",
+       title = "Focus vs Age in different Substance Groups")+
+  theme(axis.text.x=element_text(angle=45, hjust = 1),
+       axis.text=element_text(size = 8),
+       legend.text=element_text(size = 14))+
+   facet_wrap( ~Drug_Type)
+  ggsave("Mean Missed Questions over Age.png", width = 22 , height = 12, unit = "cm")
+```
+```{r, fig.width = 6, fig.height= 3}
+
+ #Line Graph of Missed Questions over Gender of Subjects
+ ggplot(drug_test, aes(x = Gender,
+                      y = Missed_questions,
+                      color = Drug_Type))+
+  geom_boxplot(aes(group = Gender)) +
+  labs(x = "Gender of Subject", 
+       y = "Count of Missed Letters",
+       color = "Drug Type",
+       title = " Focus vs Gender in different Substance Groups")+
+   facet_wrap( ~Drug_Type)+
+    theme(axis.text.x=element_text(angle=45, hjust = 1),
+       axis.text=element_text(size = 8),
+       legend.text=element_text(size = 14))
+  ggsave("Missed Questions over Gender.png", width = 24, height = 12, unit = "cm")
+```
+```{r , fig.width = 6, fig.height= 3}
+
+#Line Graph of Missed Questions over Loaction of Subjects
+
+ ggplot(drug_test, aes(x = Drug_Type,
+                      y = Missed_questions,
+                      color = Drug_Type))+
+  geom_boxplot(aes(group = Drug_Type)) +
+  labs(x = "Drug Type", 
+       y = "Count of Missed Letters",
+       color = "Drug Type",
+       title = " Focus vs Location of Subject", )+
+  facet_wrap( ~Village)+
+  theme(axis.text.x=element_text(angle=45, hjust = 1),
+       axis.text=element_text(size = 8),
+       legend.text=element_text(size = 14))
+  ggsave("Missed Questions over Location.png", width = 24, height = 12, unit = "cm")
+```
+
+```{r}
+library(lme4)
+#library(lmerTest)
+
+# checking model assumptions
+ggplot(drug_test, aes(x = Missed_questions, group = Drug_Type, color = Drug_Type)) +
+  geom_density()
+
+# poisson regression
+time <- glmer(Missed_questions ~ factor(Time) + (1 | S_No),
+                family = poisson(link = "log"), data = drug_test)
+drug <- glmer(Missed_questions ~ Drug_Type + (1 | S_No),
+                family = poisson(link = "log"), data = drug_test)
+timedrug <- drug <- glmer(Missed_questions ~ factor(Time) + Drug_Type + (1 | S_No),
+                family = poisson(link = "log"), data = drug_test)
+full <- glmer(Missed_questions ~ factor(Time) + Drug_Type + 
+                factor(Time)*Drug_Type + (1 | S_No),
+                family = poisson(link = "log"), data = drug_test)
+
+summary(full)
+anova(timedrug, full, test = "Chisq")
+
+ggsave("Poisson Curve.png", width = 24, height = 12, unit = "cm")
+```
+
+Because we had longitudinal data, we recruited Professor Brittney Bailey (Amherst College) to assist 
+with a generalized linear mixed model to determine whether drug type affected focus. 
+We found there were significant differences in the number of missed questions between treatment groups over time (p < 0.01). 
+
